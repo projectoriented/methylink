@@ -31,15 +31,14 @@ def write_linked_tags(bam, dict_tags, out_file):
     # bam: equivalent aligned bam
     # dict_tags: {query_name: Mm tags and possibly Ml}
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
-    counter=0
     for read in bam.fetch(until_eof=True):
         if read.query_name in dict_tags.keys() and read.is_mapped:
             read.set_tags(read.get_tags() + dict_tags[read.query_name])
-            counter += 1
         appended_tags.write(read)
-    print(counter)
     print(f"File written to: {out_file}")
     appended_tags.close()
 
 
 write_linked_tags(aln_bam, tags_dict, out_file)
+
+# next steps: need to write argparse and make it compatible with snakefile
