@@ -1,0 +1,6 @@
+# pipeline
+data/
+
+# IDE - PyCharm related
+.idea/
+__pycache__
