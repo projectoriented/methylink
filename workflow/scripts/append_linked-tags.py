@@ -4,7 +4,7 @@ import pysam
 import sys
 
 # LOGGING
-sys.stdout = open(snakemake.log, "w")
+sys.stdout = open(snakemake.log[0], "w")
 
 aln_bam = pysam.AlignmentFile(snakemake.input.aln_bam, "rb")
 methyl_bam = pysam.AlignmentFile(snakemake.input.methyl_bam, "rb", check_sq=False)
@@ -20,6 +20,7 @@ def fetch_modified_bases(modified_obj):
             qname = read.query_name
             tags_dict[qname] = tags
     modified_obj.close()
+    print(f"Base modification tags fetched for {modified_obj.filename}")
     return tags_dict
 
 
@@ -28,11 +29,15 @@ def write_linked_tags(bam, tags_dict, out_file):
     # dict_tags: {query_name: Mm tags and possibly Ml}
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
     for read in bam.fetch(until_eof=True):
-        if read.query_name in tags_dict.keys() and read.is_mapped:
+        if read.query_name in tags_dict.keys() and not read.is_unmapped:
             read.set_tags(read.get_tags() + tags_dict[read.query_name])
         appended_tags.write(read)
     print(f"File written to: {out_file}")
     appended_tags.close()
+
+    # write index
+    print(f"Index written for {out_file}")
+    pysam.index(output_file)
 
 
 tags_dict = fetch_modified_bases(methyl_bam)

@@ -4,14 +4,16 @@ min_version("6.7.0")
 
 rule all:
     input:
-        "output/CHM1_aln_test_linked-subsampled.bam"
+        "output/CHM1_aln_test_linked.bam",
+        "output/CHM1_aln_test_linked.bam.bai"
 
 rule append_tags2aln:
     input:
-        aln_bam = "data/{sample}_aln_test-subsampled.bam",
-        methyl_bam = "data/{sample}_m5_test-subsampled.bam"
+        aln_bam = "data/{sample}_aln_test.bam",
+        methyl_bam = "data/{sample}_m5_test.bam"
     output:
-        linked_bam = "output/{sample}_aln_test_linked-subsampled.bam"
+        linked_bam = "output/{sample}_aln_test_linked.bam",
+        linked_bai = "output/{sample}_aln_test_linked.bam.bai"
     log:
         "logs/scripts/{sample}.log"
     script:
