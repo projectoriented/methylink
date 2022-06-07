@@ -36,8 +36,8 @@ def write_linked_tags(bam, tags_dict, out_file):
     appended_tags.close()
 
     # write index
-    print(f"Index written for {out_file}")
     pysam.index(output_file)
+    print(f"Index written for {out_file}")
 
 
 tags_dict = fetch_modified_bases(methyl_bam)
