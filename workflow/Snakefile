@@ -17,4 +17,4 @@ rule append_tags2aln:
     log:
         "logs/scripts/{sample}.log"
     script:
-        "scripts/append_linked-tags.py"
+        "scripts/append_mod_tags.py"
