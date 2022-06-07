@@ -1,0 +1,18 @@
+from snakemake.utils import min_version
+
+min_version("6.7.0")
+
+rule all:
+    input:
+        "output/{sample}_aln_test_linked.bam"
+
+rule append_tags2aln:
+    input:
+        aln_bam = "data/{sample}_aln_test.bam",
+        methyl_bam = "data/{sample}_m5_test.bam"
+    output:
+        linked_bam = "output/{sample}_aln_test_linked.bam"
+    log:
+        "logs/scripts/{sample}.log"
+    script:
+        "../scripts/append_linked-tags.py"

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 import pysam
+import sys
 
-from utils import ROOT_DIR
+# LOGGING
+sys.stdout = open(snakemake.log, "w")
 
-aln_file = ROOT_DIR + "/data/CHM1_aln_test-subsampled.bam"
-m5_file = ROOT_DIR + "/data/CHM1_m5_test-subsampled.bam"
-
-aln_bam = pysam.AlignmentFile(aln_file, "rb", check_sq=False)
-m5_bam = pysam.AlignmentFile(m5_file, "rb", check_sq=False)
+aln_bam = pysam.AlignmentFile(snakemake.input.aln_bam, "rb")
+methyl_bam = pysam.AlignmentFile(snakemake.input.methyl_bam, "rb", check_sq=False)
+output_file = snakemake.output.linked_bam
 
 
 def fetch_modified_bases(modified_obj):
@@ -19,26 +19,22 @@ def fetch_modified_bases(modified_obj):
             tags = read.get_tags()
             qname = read.query_name
             tags_dict[qname] = tags
-    m5_bam.close()
+    modified_obj.close()
     return tags_dict
 
 
-tags_dict = fetch_modified_bases(m5_bam)
-out_file = ROOT_DIR + "/data/linked.bam"
-
-
-def write_linked_tags(bam, dict_tags, out_file):
+def write_linked_tags(bam, tags_dict, out_file):
     # bam: equivalent aligned bam
     # dict_tags: {query_name: Mm tags and possibly Ml}
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
     for read in bam.fetch(until_eof=True):
-        if read.query_name in dict_tags.keys() and read.is_mapped:
-            read.set_tags(read.get_tags() + dict_tags[read.query_name])
+        if read.query_name in tags_dict.keys() and read.is_mapped:
+            read.set_tags(read.get_tags() + tags_dict[read.query_name])
         appended_tags.write(read)
     print(f"File written to: {out_file}")
     appended_tags.close()
 
 
-write_linked_tags(aln_bam, tags_dict, out_file)
+tags_dict = fetch_modified_bases(methyl_bam)
 
-# next steps: need to write argparse and make it compatible with snakefile
+write_linked_tags(aln_bam, tags_dict, output_file)
