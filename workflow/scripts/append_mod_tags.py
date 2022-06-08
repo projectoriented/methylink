@@ -20,7 +20,7 @@ def fetch_modified_bases(modified_obj):
             qname = read.query_name
             tags_dict[qname] = tags
     modified_obj.close()
-    print(f"Base modification tags fetched for {modified_obj.filename}")
+    print(f"Base modification tags fetched for {modified_obj.filename.decode()}")
     return tags_dict
 
 
