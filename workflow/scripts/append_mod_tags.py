@@ -6,6 +6,7 @@ import sys
 # LOGGING
 sys.stdout = open(snakemake.log[0], "w")
 
+# INPUTS
 aln_bam = pysam.AlignmentFile(snakemake.input.aln_bam, "rb")
 methyl_bam = pysam.AlignmentFile(snakemake.input.methyl_bam, "rb", check_sq=False)
 output_file = snakemake.output.linked_bam
@@ -28,8 +29,8 @@ def write_linked_tags(bam, tags_dict, out_file):
     # bam: equivalent aligned bam
     # dict_tags: {query_name: [Mm tags and possibly Ml]}
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
-    for read in bam.fetch(until_eof=True):
-        if read.query_name in tags_dict.keys() and not read.is_unmapped:
+    for read in bam.fetch():
+        if read.query_name in tags_dict.keys():
             read.set_tags(read.get_tags() + tags_dict[read.query_name])
         appended_tags.write(read)
     print(f"File written to: {out_file}")
