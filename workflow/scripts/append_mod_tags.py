@@ -12,7 +12,7 @@ output_file = snakemake.output.linked_bam
 
 
 def fetch_modified_bases(modified_obj):
-    # this function assumes a bam with just modified bases in optional tags
+    # modified_obj: assumes a bam with just modified bases in optional tags e.g. Mm & Ml
     tags_dict = {}
     for read in modified_obj.fetch(until_eof=True):
         if read.has_tag("Mm"):
