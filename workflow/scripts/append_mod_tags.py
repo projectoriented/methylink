@@ -26,7 +26,7 @@ def fetch_modified_bases(modified_obj):
 
 def write_linked_tags(bam, tags_dict, out_file):
     # bam: equivalent aligned bam
-    # dict_tags: {query_name: Mm tags and possibly Ml}
+    # dict_tags: {query_name: [Mm tags and possibly Ml]}
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
     for read in bam.fetch(until_eof=True):
         if read.query_name in tags_dict.keys() and not read.is_unmapped:
