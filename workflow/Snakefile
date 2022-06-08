@@ -1,19 +1,44 @@
 from snakemake.utils import min_version
+import pandas as pd
 
 min_version("6.7.0")
 
+configfile: "config/config.yaml"
+MANIFEST = config.get("samples", "config/samples.tsv")
+
+manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col="sample_name")
+
+wildcard_constraints:
+    sample = "|".join(manifest_df.index)
+
+def get_aln_bam(wildcards):
+    return manifest_df.at[wildcards.sample, "align_bam"]
+
+def get_methyl_bam(wildcards):
+    test = manifest_df.at[wildcards.sample, "methyl_bam"]
+    if not test.endswith(".bam"):
+        with open(test, "r") as infile:
+            return [line.rstrip() for line in infile]
+    else:
+        return [test]
+
+localrules:all
+
 rule all:
     input:
-        "output/CHM1_aln_test_linked.bam",
-        "output/CHM1_aln_test_linked.bam.bai"
+        expand("output/{sample}_aln_linked.bam", sample=manifest_df.index)
 
 rule append_tags2aln:
     input:
-        aln_bam = "data/{sample}_aln_test.bam",
-        methyl_bam = "data/{sample}_m5_test.bam"
+        aln_bam = get_aln_bam,
+        methyl_bam = get_methyl_bam
     output:
-        linked_bam = "output/{sample}_aln_test_linked.bam",
-        linked_bai = "output/{sample}_aln_test_linked.bam.bai"
+        linked_bam = "output/{sample}_aln_linked.bam",
+        linked_bai = "output/{sample}_aln_linked.bam.bai"
+    threads: 1
+    resources:
+        mem=4,
+        hrs=96,
     log:
         "logs/scripts/{sample}.log"
     script:
