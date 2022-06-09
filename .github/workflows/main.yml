@@ -6,20 +6,8 @@ on:
     - main
 
 jobs:
-  linting:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Linting
-      uses: snakemake/snakemake-github-action@v1.24.0
-      with:
-        directory: .test
-        snakefile: workflow/Snakefile
-        args: "--lint --cores 1 --configfile .test/config-main/config.yaml"
-
   run-workflow:
     runs-on: ubuntu-latest
-    needs: linting
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
