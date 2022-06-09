@@ -7,8 +7,8 @@ import sys
 sys.stdout = open(snakemake.log[0], "w")
 
 
-def fetch_modified_bases(modified_obj):
-    # modified_obj: assumes a bam with just modified bases in optional tags e.g. Mm & Ml
+def fetch_modified_bases(modified_obj) -> dict:
+    # modified_obj: assumes a bam pysam obj with just modified bases in optional tags e.g. Mm & Ml
     tags_dict = {}
     for read in modified_obj.fetch(until_eof=True):
         if read.has_tag("Mm"):
@@ -20,7 +20,7 @@ def fetch_modified_bases(modified_obj):
     return tags_dict
 
 
-def write_linked_tags(bam, tags_dict, out_file):
+def write_linked_tags(bam, tags_dict, out_file) -> None:
     # bam: equivalent aligned bam
     # dict_tags: {query_name: [Mm tags and possibly Ml]}
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
@@ -36,7 +36,8 @@ def write_linked_tags(bam, tags_dict, out_file):
     print(f"Index written for {out_file}.bai")
 
 
-def collect_tags(methyl_sn_input):
+def collect_tags(methyl_sn_input: list) -> dict:
+    # methyl_sn_input: snakemake input
     tags = {}
     if not len(methyl_sn_input) == 1:
         for bam in methyl_sn_input:
