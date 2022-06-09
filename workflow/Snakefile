@@ -4,7 +4,7 @@ import pandas as pd
 min_version("6.7.0")
 
 configfile: "config/config.yaml"
-MANIFEST = config.get("samples", "config/samples.tsv")
+MANIFEST = config.get("samples", "config-main/samples.tsv")
 
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col="sample_name")
 

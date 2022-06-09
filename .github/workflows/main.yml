@@ -15,7 +15,7 @@ jobs:
       with:
         directory: .test
         snakefile: workflow/Snakefile
-        args: "--lint --cores 1 --configfile .test/config/config.yaml"
+        args: "--lint --cores 1 --configfile .test/config-main/config-main.yaml"
 
   run-workflow:
     runs-on: ubuntu-latest
@@ -28,4 +28,4 @@ jobs:
       with:
         directory: .test
         snakefile: workflow/Snakefile
-        args: "--use-conda --cores 1 --configfile .test/config/config.yaml --conda-cleanup-pkgs"
+        args: "--use-conda --cores 1 --configfile .test/config-main/config.yaml --conda-cleanup-pkgs"
