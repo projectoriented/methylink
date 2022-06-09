@@ -1,5 +1,10 @@
 # pipeline
 data/
+output/
+.snakemake/
+logs/
+workflow/.snakemake/
+
 
 # IDE - PyCharm related
 .idea/
