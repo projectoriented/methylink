@@ -6,11 +6,6 @@ import sys
 # LOGGING
 sys.stdout = open(snakemake.log[0], "w")
 
-# INPUTS
-aln_bam = pysam.AlignmentFile(snakemake.input.aln_bam, "rb")
-methyl_bam = pysam.AlignmentFile(snakemake.input.methyl_bam, "rb", check_sq=False)
-output_file = snakemake.output.linked_bam
-
 
 def fetch_modified_bases(modified_obj):
     # modified_obj: assumes a bam with just modified bases in optional tags e.g. Mm & Ml
@@ -37,10 +32,26 @@ def write_linked_tags(bam, tags_dict, out_file):
     appended_tags.close()
 
     # write index
-    pysam.index(output_file)
+    pysam.index(out_file)
     print(f"Index written for {out_file}.bai")
 
 
-tags_dict = fetch_modified_bases(methyl_bam)
+def collect_tags(methyl_sn_input):
+    tags = {}
+    if not len(methyl_sn_input) == 1:
+        for bam in methyl_sn_input:
+            methyl_bam = pysam.AlignmentFile(bam, "rb", check_sq=False)
+            dict_of_tags_per_bam = fetch_modified_bases(methyl_bam)
+            tags.update(dict_of_tags_per_bam)
+    else:
+        methyl_bam = pysam.AlignmentFile(methyl_sn_input, "rb", check_sq=False)
+        dict_of_tags_per_bam = fetch_modified_bases(methyl_bam)
+        tags.update(dict_of_tags_per_bam)
+    return tags
+
+
+aln_bam = pysam.AlignmentFile(*snakemake.input.aln_bam, "rb")
+tags_dict = collect_tags(snakemake.input.methyl_bam)
+output_file = snakemake.output.linked_bam
 
 write_linked_tags(aln_bam, tags_dict, output_file)
