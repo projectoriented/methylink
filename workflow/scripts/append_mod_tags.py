@@ -51,7 +51,7 @@ def collect_tags(methyl_sn_input: list) -> dict:
     return tags
 
 
-aln_bam = pysam.AlignmentFile(*snakemake.input.aln_bam, "rb")
+aln_bam = pysam.AlignmentFile(snakemake.input.aln_bam, "rb")
 tags_dict = collect_tags(snakemake.input.methyl_bam)
 output_file = snakemake.output.linked_bam
 
