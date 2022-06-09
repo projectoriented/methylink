@@ -41,5 +41,7 @@ rule append_tags2aln:
         hrs=96,
     log:
         "logs/scripts/{sample}.log"
+    conda:
+        "envs/pysam.yaml"
     script:
         "scripts/append_mod_tags.py"
