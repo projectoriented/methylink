@@ -1,2 +1,2 @@
-sample_name	align_bam	methylated_bam
+sample_name	align_bam	methyl_bam
 CHM1	test-data/CHM1_aln_test-subsampled.bam	test-data/CHM1_methylated_test-subsampled.fofn
