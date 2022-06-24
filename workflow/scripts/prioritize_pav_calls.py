@@ -15,9 +15,9 @@ def filter_bed(query_bed, lc_bed, gencode_bed, out_file):
     gencode = pybedtools.BedTool(gencode_bed)
 
     # remove low complexity regions
-    lc_removed = query.intersect(lc, v=True)
+    query_without_lc = query.intersect(lc, v=True)
     # filter for coding regions - this is not strand aware
-    return lc_removed.intersect(gencode, u=True, output=out_file)
+    return query_without_lc.intersect(gencode, u=True, output=out_file)
 
 
 filter_bed(filter_sizes(snakemake.input.pav_ins_bed), snakemake.input.lc_bed, snakemake.input.gencode_bed, snakemake.output.out_file)
