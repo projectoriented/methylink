@@ -8,7 +8,11 @@ sys.stdout = open(snakemake.log[0], "w")
 
 
 def fetch_modified_bases(modified_obj) -> dict:
-    # modified_obj: assumes a bam pysam obj with just modified bases in optional tags e.g. Mm & Ml
+    """
+    Fetch base modification tags Mm & Ml
+    :param modified_obj: An unsorted bam pysam object with just methylation calls
+    :return: A dictionary of tags where keys = query name and value = list of optional tags
+    """
     tags_dict = {}
     for read in modified_obj.fetch(until_eof=True):
         if read.has_tag("Mm"):
@@ -21,8 +25,13 @@ def fetch_modified_bases(modified_obj) -> dict:
 
 
 def write_linked_tags(bam, tags_dict, out_file) -> None:
-    # bam: equivalent aligned bam
-    # dict_tags: {query_name: [Mm tags and possibly Ml]}
+    """
+    Write out merged bam with Mm tags and possibly Ml, and its index.
+    :param bam: equivalent aligned bam
+    :param tags_dict: a dict of {query_name: [Mm tags and possibly Ml]}
+    :param out_file: merged bam file path
+    :return: None
+    """
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
     for read in bam.fetch():
         if read.query_name in tags_dict.keys():
@@ -38,6 +47,11 @@ def write_linked_tags(bam, tags_dict, out_file) -> None:
 
 def collect_tags(methyl_sn_input: list) -> dict:
     # methyl_sn_input: snakemake input
+    """
+    Collect optional tags from ONT bam with methyl calls
+    :param methyl_sn_input: a list of file paths pointing to methyl bam
+    :return: a dict of {query_name: [Mm tags and possibly Ml]}
+    """
     tags = {}
     if not len(methyl_sn_input) == 1:
         for bam in methyl_sn_input:
