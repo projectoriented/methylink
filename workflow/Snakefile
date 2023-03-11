@@ -33,11 +33,11 @@ rule append_tags2aln:
         aln_bam = get_aln_bam,
         methyl_bam = get_methyl_bam
     output:
-        linked_bam = "output/{sample}_aln_linked.bam",
-        linked_bai = "output/{sample}_aln_linked.bam.bai"
+        linked_bam = "results/{sample}_aln_linked.bam",
+        linked_bai = "results/{sample}_aln_linked.bam.bai"
     threads: 1
     resources:
-        mem=4,
+        mem=lambda wildcards, attempt: attempt * 4,
         hrs=96,
     log:
         "logs/scripts/{sample}.log"
