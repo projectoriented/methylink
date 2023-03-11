@@ -26,7 +26,7 @@ localrules:all
 
 rule all:
     input:
-        expand("output/{sample}_aln_linked.bam", sample=manifest_df.index)
+        expand("results/{sample}_aln_linked.bam", sample=manifest_df.index)
 
 rule append_tags2aln:
     input:
