@@ -131,10 +131,11 @@ def main():
     make_subset_bams(bam=bam, n_splits=10)
 
     chunked_bams = [f"tmp.{idx}.bam" for idx in range(0, 10)]
+    meth_multiplier = [methyl_collection] * len(chunked_bams)
     link_bam_output_names = [f"tmp.{idx}-linked.bam" for idx in range(0, 10)]
 
     with Pool(threads) as p:
-        p.starmap(execute_the_commands, zip(chunked_bams, link_bam_output_names))
+        p.starmap(execute_the_commands, zip(chunked_bams, meth_multiplier, link_bam_output_names))
         p.close()
 
     combine_the_chunked(link_bam_output_names, final_output)
