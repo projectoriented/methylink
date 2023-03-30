@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 
 import pysam
+import numpy as np
+import os
 import sys
+from multiprocessing import Pool
+
 
 # LOGGING
 sys.stdout = open(snakemake.log[0], "w")
@@ -15,7 +19,7 @@ def fetch_modified_bases(modified_obj) -> dict:
     """
     tags_dict = {}
     for read in modified_obj.fetch(until_eof=True):
-        if read.has_tag("Mm"):
+        if read.has_tag("Mm") or read.has_tag("MM"):
             tags = read.get_tags()
             qname = read.query_name
             tags_dict[qname] = tags
@@ -65,8 +69,82 @@ def collect_tags(methyl_sn_input: list) -> dict:
     return tags
 
 
-aln_bam = pysam.AlignmentFile(snakemake.input.aln_bam, "rb")
-tags_dict = collect_tags(snakemake.input.methyl_bam)
-output_file = snakemake.output.linked_bam
+def get_n_records(bam: pysam.AlignmentFile):
+    records = list(map(lambda x: x, bam))
+    return records
 
-write_linked_tags(aln_bam, tags_dict, output_file)
+
+def make_subset_bams(bam: pysam.AlignmentFile, n_splits):
+    partition = np.array_split(get_n_records(bam=bam), n_splits)
+
+    for idx, collection_of_records in enumerate(partition):
+        subset_bam = pysam.AlignmentFile(f"tmp.{idx}.bam", "wb", template=bam)
+        for record in collection_of_records:
+            subset_bam.write(record)
+
+        subset_bam.close()
+        pysam.index(f"tmp.{idx}.bam")
+
+    bam.close()
+
+
+def combine_the_chunked(bams: list[pysam.AlignmentFile], merge_output: str):
+
+    aln_bams = [pysam.AlignmentFile(x, check_sq=False) for x in bams]
+
+    out_bam = pysam.AlignmentFile(merge_output, "wb", template=aln_bams[0])
+    for bam in aln_bams:
+        for records in bam:
+            out_bam.write(records)
+        bam.close()
+
+    out_bam.close()
+    pysam.index(merge_output)
+
+
+def execute_the_commands(bam_file:str, methyl_file: list, output_file: str):
+    aln_bam = pysam.AlignmentFile(bam_file, "rb")
+    tags_dict = collect_tags(methyl_file)
+    write_linked_tags(aln_bam, tags_dict, output_file)
+
+
+def clean_up_temps(files: list):
+    for f in files:
+        index = f + '.bai'
+        try:
+            os.remove(f)
+            os.remove(index)
+            print("removed: ", f)
+            print("removed: ", index)
+        except FileNotFoundError:
+            pass
+
+
+def main():
+    # Grabbing from snakemake
+    threads = snakemake.threads
+    methyl_collection = snakemake.input.methyl_bam
+    final_output = snakemake.output.linked_bam
+    bam = pysam.AlignmentFile(snakemake.input.aln_bam, check_sq=False)
+
+    # Make the chunks
+    make_subset_bams(bam=bam, n_splits=10)
+
+    chunked_bams = [f"tmp.{idx}.bam" for idx in range(0, 10)]
+    link_bam_output_names = [f"tmp.{idx}-linked.bam" for idx in range(0, 10)]
+
+    with Pool(threads) as p:
+        p.starmap(execute_the_commands, zip(chunked_bams, link_bam_output_names))
+        p.close()
+
+    combine_the_chunked(link_bam_output_names, final_output)
+
+    # Clean up the chunked bams and their index
+    clean_up_temps(chunked_bams)
+
+    # Clean up the linked bams and their index
+    clean_up_temps(link_bam_output_names)
+    
+
+if __name__ == '__main__':
+    sys.exit(main())
