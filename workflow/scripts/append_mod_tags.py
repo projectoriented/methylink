@@ -127,12 +127,15 @@ def main():
     final_output = snakemake.output.linked_bam
     bam = pysam.AlignmentFile(snakemake.input.aln_bam, check_sq=False)
 
-    # Make the chunks
-    make_subset_bams(bam=bam, n_splits=10)
+    # Decide the N to split the aligned bam.
+    N = threads * 30
 
-    chunked_bams = [f"tmp.{idx}.bam" for idx in range(0, 10)]
+    # Make the chunks
+    make_subset_bams(bam=bam, n_splits=N)
+
+    chunked_bams = [f"tmp.{idx}.bam" for idx in range(0, N)]
     meth_multiplier = [methyl_collection] * len(chunked_bams)
-    link_bam_output_names = [f"tmp.{idx}-linked.bam" for idx in range(0, 10)]
+    link_bam_output_names = [f"tmp.{idx}-linked.bam" for idx in range(0, N)]
 
     with Pool(threads) as p:
         p.starmap(execute_the_commands, zip(chunked_bams, meth_multiplier, link_bam_output_names))
