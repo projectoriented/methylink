@@ -144,7 +144,7 @@ def main():
 
     # Clean up the linked bams and their index
     clean_up_temps(link_bam_output_names)
-    
+
 
 if __name__ == '__main__':
     sys.exit(main())
