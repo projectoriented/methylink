@@ -128,7 +128,7 @@ def main():
     bam = pysam.AlignmentFile(snakemake.input.aln_bam, check_sq=False)
 
     # Decide the N to split the aligned bam.
-    N = threads * 30
+    N = threads * 100000
 
     # Make the chunks
     make_subset_bams(bam=bam, n_splits=N)
