@@ -8,7 +8,7 @@ from multiprocessing import Pool
 
 
 # LOGGING
-sys.stdout = open(snakemake.log[0], "w")
+# sys.stdout = open(snakemake.log[0], "w")
 
 
 def fetch_modified_bases(modified_obj) -> dict:
@@ -37,7 +37,7 @@ def write_linked_tags(bam, tags_dict, out_file) -> None:
     :return: None
     """
     appended_tags = pysam.AlignmentFile(out_file, "wb", template=bam)
-    for read in bam.fetch():
+    for read in bam.fetch(until_eof=True):
         if read.query_name in tags_dict.keys():
             read.set_tags(read.get_tags() + tags_dict[read.query_name])
         appended_tags.write(read)
@@ -47,7 +47,6 @@ def write_linked_tags(bam, tags_dict, out_file) -> None:
     # write index
     pysam.index(out_file)
     print(f"Index written for {out_file}.bai")
-
 
 def collect_tags(methyl_sn_input: list) -> dict:
     # methyl_sn_input: snakemake input
@@ -74,22 +73,21 @@ def get_n_records(bam: pysam.AlignmentFile):
     return records
 
 
-def make_subset_bams(bam: pysam.AlignmentFile, n_splits):
+def make_subset_bams(bam: pysam.AlignmentFile, n_splits, prefix):
     partition = np.array_split(get_n_records(bam=bam), n_splits)
 
     for idx, collection_of_records in enumerate(partition):
-        subset_bam = pysam.AlignmentFile(f"tmp.{idx}.bam", "wb", template=bam)
+        subset_bam = pysam.AlignmentFile(f"{prefix}_tmp.{idx}.bam", "wb", template=bam)
         for record in collection_of_records:
             subset_bam.write(record)
 
         subset_bam.close()
-        pysam.index(f"tmp.{idx}.bam")
+        pysam.index(f"{prefix}_tmp.{idx}.bam")
 
     bam.close()
 
 
-def combine_the_chunked(bams: list[pysam.AlignmentFile], merge_output: str):
-
+def combine_the_chunked(bams: list[str], merge_output: str):
     aln_bams = [pysam.AlignmentFile(x, check_sq=False) for x in bams]
 
     out_bam = pysam.AlignmentFile(merge_output, "wb", template=aln_bams[0])
@@ -102,9 +100,8 @@ def combine_the_chunked(bams: list[pysam.AlignmentFile], merge_output: str):
     pysam.index(merge_output)
 
 
-def execute_the_commands(bam_file:str, methyl_file: list, output_file: str):
+def run_pool(bam_file: str, tags_dict: dict, output_file) -> None:
     aln_bam = pysam.AlignmentFile(bam_file, "rb")
-    tags_dict = collect_tags(methyl_file)
     write_linked_tags(aln_bam, tags_dict, output_file)
 
 
@@ -121,25 +118,32 @@ def clean_up_temps(files: list):
 
 
 def main():
+
     # Grabbing from snakemake
     threads = snakemake.threads
     methyl_collection = snakemake.input.methyl_bam
     final_output = snakemake.output.linked_bam
     bam = pysam.AlignmentFile(snakemake.input.aln_bam, check_sq=False)
+    prefix = os.path.join(snakemake.resources.tmpdir, snakemake.wildcards.sample)
 
     # Decide the N to split the aligned bam.
-    N = threads * 50
+    N = threads * 20
 
     # Make the chunks
-    make_subset_bams(bam=bam, n_splits=N)
+    make_subset_bams(bam=bam, n_splits=N, prefix=prefix)
 
-    chunked_bams = [f"tmp.{idx}.bam" for idx in range(0, N)]
-    meth_multiplier = [methyl_collection] * len(chunked_bams)
-    link_bam_output_names = [f"tmp.{idx}-linked.bam" for idx in range(0, N)]
+    # Get the meth dictionary
+    tags_dict = collect_tags(methyl_collection)
+
+    # Gather the arguments for run_pool
+    chunked_bams = [f"{prefix}_tmp.{idx}.bam" for idx in range(0, N)]
+    meth_multiplier = [tags_dict] * len(chunked_bams)
+    link_bam_output_names = [f"{prefix}_tmp.{idx}-linked.bam" for idx in range(0, N)]
 
     with Pool(threads) as p:
-        p.starmap(execute_the_commands, zip(chunked_bams, meth_multiplier, link_bam_output_names))
+        p.starmap(run_pool, zip(chunked_bams, meth_multiplier, link_bam_output_names))
         p.close()
+        p.join()
 
     combine_the_chunked(link_bam_output_names, final_output)
 
