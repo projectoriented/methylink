@@ -35,9 +35,9 @@ rule append_tags2aln:
     output:
         linked_bam = "results/{sample}_aln_linked.bam",
         linked_bai = "results/{sample}_aln_linked.bam.bai"
-    threads: 1
+    threads: 4
     resources:
-        mem=lambda wildcards, attempt: attempt * 64,
+        mem=lambda wildcards, attempt: attempt * 72,
         hrs=96,
     log:
         "logs/scripts/{sample}.log"
