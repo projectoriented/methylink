@@ -48,6 +48,7 @@ def write_linked_tags(bam, tags_dict, out_file) -> None:
     pysam.index(out_file)
     print(f"Index written for {out_file}.bai")
 
+
 def collect_tags(methyl_sn_input: list) -> dict:
     # methyl_sn_input: snakemake input
     """
