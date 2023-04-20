@@ -153,19 +153,17 @@ def run_pool(bam_file: str, db_name, output_file) -> None:
 
     write_linked_tags(aln_bam, db_name, output_file)
 
-    wait_time = 1  # wait 1 second between each check
-
     # wait for the file to become available
     while not os.path.exists(bam_file):
-        time.sleep(wait_time)
+        time.sleep(1)
 
     # file is available, remove it
     clean_up_temps([bam_file])
 
 
-def clean_up_temps(files: list):
+def clean_up_temps(files: list, suffix='.bai'):
     for f in files:
-        index = f + '.bai'
+        index = f + suffix
         try:
             os.remove(f)
             os.remove(index)
