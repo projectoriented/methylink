@@ -39,6 +39,7 @@ rule append_tags2aln:
     resources:
         mem=lambda wildcards, attempt: attempt * 4,
         hrs=96,
+        disk_mb=4 * (10 ** 5)
     log:
         "logs/scripts/{sample}.log"
     conda:
