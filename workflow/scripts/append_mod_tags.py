@@ -11,13 +11,14 @@ from multiprocessing import Pool
 
 import pysam
 
-
 # LOGGING
 sys.stdout = open(snakemake.log[0], "w")
+
 
 def get_time():
     time_rn = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
     return time_rn
+
 
 def fetch_modified_bases(modified_obj) -> dict:
     """
@@ -81,7 +82,6 @@ def collect_tags(methyl_sn_input: list) -> dict:
 
 
 def make_subset_bams(bam, n_splits, prefix):
-
     # Create output BAM files equivalent to n_splits
     outbams = [pysam.AlignmentFile(f"{prefix}_tmp.{i}.bam", "wb", template=bam) for i in range(n_splits)]
 
@@ -159,9 +159,11 @@ def main():
     # Make sure that each chunk is roughly 100 MB
     file_size = os.path.getsize(aln_bam)
     chunk_size = 100 * 1024 * 1024  # 100 MB in bytes
+
     def get_n_splits():
         num_chunks = math.ceil(file_size / chunk_size)
         return num_chunks
+
     n = 10 if file_size < chunk_size else get_n_splits()
 
     # Get the meth dictionary
