@@ -15,6 +15,7 @@ import pysam
 # LOGGING
 sys.stdout = open(snakemake.log[0], "w")
 
+
 def create_database(db_name):
     if os.path.exists(db_name):
         os.remove(db_name)
@@ -33,12 +34,12 @@ def get_time():
     return time_rn
 
 
-def fetch_modified_bases(modified_obj, db_name):
+def fetch_modified_bases(modified_obj, db_name) -> None:
     """
     Fetch base modification tags Mm & Ml
-    :param modified_obj: An unsorted bam pysam object with just methylation calls
+    :param modified_obj: An unsorted bam pysam object with just methylation tags
     :param db_name:
-    :return: A dictionary of tags where keys = query name and value = list of optional tags
+    :return: None
     """
     print(f"Opening {modified_obj.filename.decode()} to fetch tags. {get_time()}")
 
@@ -67,9 +68,9 @@ def fetch_modified_bases(modified_obj, db_name):
 def write_linked_tags(bam, db_name, out_file) -> None:
     """
     Write out merged bam with Mm tags and possibly Ml, and its index.
-    :param bam: equivalent aligned bam
-    :param db_name: a dict of {query_name: [Mm tags and possibly Ml]}
-    :param out_file: merged bam file path
+    :param bam: An aligned bam
+    :param db_name:
+    :param out_file:
     :return: None
     """
 
@@ -93,7 +94,7 @@ def write_linked_tags(bam, db_name, out_file) -> None:
     print(f"Index written for {out_file}.bai")
 
 
-def collect_tags(methyl_sn_input: list, db_name):
+def collect_tags(methyl_sn_input: list, db_name: str) -> None:
     # methyl_sn_input: snakemake input
     """
     Collect optional tags from ONT bam with methyl calls
@@ -183,7 +184,7 @@ def main():
     prefix = os.path.join(snakemake.resources.tmpdir, snakemake.wildcards.sample)
     final_output = snakemake.output.linked_bam
 
-    db_name=f'{prefix}-meth_tags.db'
+    db_name = f'{prefix}-meth_tags.db'
     create_database(db_name=db_name)
 
     # Make sure that each chunk is roughly 100 MB
