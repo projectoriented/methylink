@@ -100,14 +100,13 @@ def collect_tags(methyl_sn_input: list, db_name):
     Collect optional tags from ONT bam with methyl calls
     :param methyl_sn_input: a list of file paths pointing to methyl bam
     :param db_name:
-    :return: a dict of {query_name: [Mm tags and possibly Ml]}
+    :return: None
     """
-    # tags = {}
+
     if not len(methyl_sn_input) == 1:
         for bam in methyl_sn_input:
             methyl_bam = pysam.AlignmentFile(bam, "rb", check_sq=False)
             fetch_modified_bases(methyl_bam, db_name)
-            # tags.update(dict_of_tags_per_bam)
     else:
         methyl_bam = pysam.AlignmentFile(methyl_sn_input[0], "rb", check_sq=False)
         fetch_modified_bases(methyl_bam, db_name)
@@ -156,7 +155,7 @@ def run_pool(bam_file: str, db_name, output_file) -> None:
 
     wait_time = 1  # wait 1 second between each check
 
-    # fait for the file to become available
+    # wait for the file to become available
     while not os.path.exists(bam_file):
         time.sleep(wait_time)
 
