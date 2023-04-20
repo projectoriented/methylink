@@ -3,16 +3,22 @@ import pandas as pd
 
 min_version("6.7.0")
 
+
 configfile: "config/config.yaml"
+
+
 MANIFEST = config.get("samples", "config/samples.tsv")
 
 manifest_df = pd.read_csv(MANIFEST, sep="\t", index_col="sample_name")
 
+
 wildcard_constraints:
-    sample = "|".join(manifest_df.index)
+    sample="|".join(manifest_df.index),
+
 
 def get_aln_bam(wildcards):
     return manifest_df.at[wildcards.sample, "align_bam"]
+
 
 def get_methyl_bam(wildcards):
     test = manifest_df.at[wildcards.sample, "methyl_bam"]
@@ -22,26 +28,30 @@ def get_methyl_bam(wildcards):
     else:
         return [test]
 
-localrules:all
+
+localrules:
+    all,
+
 
 rule all:
     input:
-        expand("results/{sample}_aln_linked.bam", sample=manifest_df.index)
+        expand("results/{sample}_aln_linked.bam", sample=manifest_df.index),
+
 
 rule append_tags2aln:
     input:
-        aln_bam = get_aln_bam,
-        methyl_bam = get_methyl_bam
+        aln_bam=get_aln_bam,
+        methyl_bam=get_methyl_bam,
     output:
-        linked_bam = "results/{sample}_aln_linked.bam",
-        linked_bai = "results/{sample}_aln_linked.bam.bai"
+        linked_bam="results/{sample}_aln_linked.bam",
+        linked_bai="results/{sample}_aln_linked.bam.bai",
     threads: 16
     resources:
         mem=lambda wildcards, attempt: attempt * 4,
         hrs=96,
-        disk_mb=4 * (10 ** 5)
+        disk_mb=4 * (10**5),
     log:
-        "logs/scripts/{sample}.log"
+        "logs/scripts/{sample}.log",
     conda:
         "envs/pysam.yaml"
     script:
