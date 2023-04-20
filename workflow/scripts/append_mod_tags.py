@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
+"""
+Link an aligned bam to its unmapped counterpart(s) with methylation tags. This is a script tuned for Snakemake.
+Author: Mei Wu, github.com/projectoriented
+"""
 
 import os
 import sys
 import time
 import itertools
 import pickle
+import sqlite3
 
 from multiprocessing import Pool
-import sqlite3
 
 import pysam
 
