@@ -15,7 +15,6 @@ import pysam
 # LOGGING
 sys.stdout = open(snakemake.log[0], "w")
 
-
 def create_database(db_name):
     if os.path.exists(db_name):
         os.remove(db_name)
@@ -133,19 +132,19 @@ def make_subset_bams(bam, n_splits, prefix):
         pysam.index(outbam.filename.decode())
 
 
-def combine_the_chunked(bams: list[str], merge_output: str):
+def combine_the_chunked(bams: list[str], merge_output: str, prefix: str, threads: int):
     aln_bams = [pysam.AlignmentFile(x, check_sq=False) for x in bams]
 
-    out_bam = pysam.AlignmentFile(f'{merge_output}.unsorted', "wb", template=aln_bams[0])
+    out_bam = pysam.AlignmentFile(f'{prefix}-unsorted.bam', "wb", template=aln_bams[0])
     for bam in aln_bams:
         for records in bam:
             out_bam.write(records)
         bam.close()
 
     out_bam.close()
-    pysam.sort('-o', merge_output, f'{merge_output}.unsorted')
+    pysam.sort("-@", f"{threads}", "-o", merge_output, f"{prefix}-unsorted.bam")
     pysam.index(merge_output)
-    os.remove(f'{merge_output}.unsorted')
+    os.remove(f'{prefix}-unsorted.bam')
 
 
 def run_pool(bam_file: str, db_name, output_file) -> None:
@@ -184,7 +183,7 @@ def main():
     prefix = os.path.join(snakemake.resources.tmpdir, snakemake.wildcards.sample)
     final_output = snakemake.output.linked_bam
 
-    db_name=f'{prefix}-my_db.db'
+    db_name=f'{prefix}-meth_tags.db'
     create_database(db_name=db_name)
 
     # Make sure that each chunk is roughly 100 MB
@@ -212,7 +211,7 @@ def main():
         p.close()
         p.join()
 
-    combine_the_chunked(link_bam_output_names, final_output)
+    combine_the_chunked(bams=link_bam_output_names, merge_output=final_output, prefix=prefix, threads=threads)
 
     # CLEANING UP!
     clean_up_temps(link_bam_output_names)
