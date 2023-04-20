@@ -3,7 +3,6 @@
 import os
 import sys
 import time
-import math
 import itertools
 import pickle
 
@@ -112,40 +111,57 @@ def collect_tags(methyl_sn_input: list, db_name: str) -> None:
         fetch_modified_bases(methyl_bam, db_name)
 
 
-def make_subset_bams(bam, n_splits, prefix):
-    # Create output BAM files equivalent to n_splits
-    outbams = [pysam.AlignmentFile(f"{prefix}_tmp.{i}.bam", "wb", template=bam) for i in range(n_splits)]
+def make_subset_bams(input_bam, prefix) -> list[str]:
+    subset_size = 100 * 1024 * 1024  # 100MB in bytes
 
-    print(f'Chunking up the bam into {n_splits} parts')
-    # Iterate over the reads in the input BAM file
-    for read in bam:
-        # Determine which output BAM file to write the read to
-        output_idx = hash(read.qname) % n_splits
-        outbam = outbams[output_idx]
+    if os.path.getsize(input_bam.filename.decode()) < subset_size:
+        subset_size = int(subset_size / 10)
 
-        # Write the read to the output BAM file
-        outbam.write(read)
+    subset_idx = 0
+    subset_size_bytes = 0
+    current_subset = None
 
-    # Close all the BAM files and write index for each
-    bam.close()
-    for outbam in outbams:
-        outbam.close()
-        pysam.index(outbam.filename.decode())
+    bam_file_list = []
+
+    for read in input_bam:
+
+        # If the current subset is None or its size has exceeded the subset size, create a new subset
+        if current_subset is None or subset_size_bytes >= subset_size:
+
+            # If this is not the first subset, close the previous subset file
+            if current_subset is not None:
+                current_subset.close()
+                pysam.index(current_subset.filename.decode())
+
+            # Create a new subset file with a name based on the subset index
+            subset_idx += 1
+            current_subset = pysam.AlignmentFile(f"{prefix}_tmp.{subset_idx}.bam", "wb", template=input_bam)
+            bam_file_list.append(f"{prefix}_tmp.{subset_idx}.bam")
+
+        # Write the current read to the current subset file
+        current_subset.write(read)
+        subset_size_bytes = os.path.getsize(current_subset.filename.decode())
+
+    # Close the last subset file
+    current_subset.close()
+    pysam.index(current_subset.filename.decode())
+
+    input_bam.close()
+
+    return bam_file_list
 
 
-def combine_the_chunked(bams: list[str], merge_output: str, prefix: str, threads: int):
+def combine_the_chunked(bams: list[str], merge_output: str):
     aln_bams = [pysam.AlignmentFile(x, check_sq=False) for x in bams]
 
-    out_bam = pysam.AlignmentFile(f'{prefix}-unsorted.bam', "wb", template=aln_bams[0])
+    out_bam = pysam.AlignmentFile(merge_output, "wb", template=aln_bams[0])
     for bam in aln_bams:
         for records in bam:
             out_bam.write(records)
         bam.close()
 
     out_bam.close()
-    pysam.sort("-@", f"{threads}", "-o", merge_output, f"{prefix}-unsorted.bam")
     pysam.index(merge_output)
-    os.remove(f'{prefix}-unsorted.bam')
 
 
 def run_pool(bam_file: str, db_name, output_file) -> None:
@@ -185,32 +201,19 @@ def main():
     db_name = f'{prefix}-meth_tags.db'
     create_database(db_name=db_name)
 
-    # Make sure that each chunk is roughly 100 MB
-    file_size = os.path.getsize(aln_bam)
-    chunk_size = 100 * 1024 * 1024  # 100 MB in bytes
-
-    def get_n_splits():
-        num_chunks = math.ceil(file_size / chunk_size)
-        return num_chunks
-
-    n = 10 if file_size < chunk_size else get_n_splits()
-
     # Get the meth dictionary
     collect_tags(methyl_collection, db_name=db_name)
 
     # Make the chunks
-    make_subset_bams(bam=bam, n_splits=n, prefix=prefix)
-
-    # Gather the arguments for run_pool
-    chunked_bams = [f"{prefix}_tmp.{idx}.bam" for idx in range(0, n)]
-    link_bam_output_names = [f"{prefix}_tmp.{idx}-linked.bam" for idx in range(0, n)]
+    chunked_bams_names = make_subset_bams(input_bam=bam, prefix=prefix)
+    link_bam_output_names = [x.replace('tmp', 'tmp-linked') for x in chunked_bams_names]
 
     with Pool(threads) as p:
-        p.starmap(run_pool, zip(chunked_bams, itertools.repeat(db_name), link_bam_output_names))
+        p.starmap(run_pool, zip(chunked_bams_names, itertools.repeat(db_name), link_bam_output_names))
         p.close()
         p.join()
 
-    combine_the_chunked(bams=link_bam_output_names, merge_output=final_output, prefix=prefix, threads=threads)
+    combine_the_chunked(bams=link_bam_output_names, merge_output=final_output)
 
     # CLEANING UP!
     clean_up_temps(link_bam_output_names)
