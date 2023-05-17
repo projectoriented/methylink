@@ -4,9 +4,7 @@ Author: Mei Wu, github.com/projectoriented
 """
 
 import os
-import sys
 import time
-import itertools
 import pickle
 import sqlite3
 import logging
