@@ -86,7 +86,7 @@ class AppendModTags:
         # write index
         pysam.index(out_file)
         print(f"Index written for {out_file}.bai")
-    
+
     @staticmethod
     def clean_bam(bam: str):
         suffix = ".bai"
@@ -96,7 +96,6 @@ class AppendModTags:
                 os.remove(f)
             except FileNotFoundError:
                 LOG.warning(f"{f} not found.")
-
 
     def run_pool(self, chunked_aln_bam_fp: str, outfile: str) -> None:
         chunked_aln_bam = pysam.AlignmentFile(chunked_aln_bam_fp, "rb")
@@ -185,4 +184,3 @@ class ScatterGather:
             shutil.rmtree(parent_dir)
         except OSError as e:
             LOG.debug("Not found: %s - %s." % (e.filename, e.strerror))
-
