@@ -4,7 +4,9 @@ output/
 .snakemake/
 logs/
 workflow/.snakemake/
-rewrite.py
+
+# setuptools
+*.egg-info/
 
 # IDE - PyCharm related
 .idea/
