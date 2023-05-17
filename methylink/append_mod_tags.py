@@ -10,8 +10,6 @@ import sqlite3
 import logging
 import shutil
 
-from multiprocessing import Pool
-
 import pysam
 
 from methylink.database import crud
@@ -20,17 +18,22 @@ LOG = logging.getLogger(__name__)
 
 
 class AppendModTags:
-    def __init__(self, prefix, threads, methyl_collection, aln_bam, output) -> None:
+    def __init__(self, prefix, threads, methyl_collection, aln_bam_path, output) -> None:
         self.prefix = prefix
         self.threads = threads
         self.methyl_collection = methyl_collection
-        self.aln_bam = aln_bam
+        self.aln_bam = pysam.AlignmentFile(aln_bam_path, check_sq=False)
         self.output = output
         self.db_name = os.path.join(self.prefix, crud.DB_NAME)
-        self.db = crud.DataBaseAdapter(self.db_name)
 
     def create_database(self):
         crud.create_database(db_name=self.db_name)
+        return self.db
+
+    @property
+    def db(self):
+        db_obj = crud.DataBaseAdapter(db_name=self.db_name)
+        return db_obj
 
     def fetch_modified_bases(self, modified_obj) -> None:
         """
@@ -38,7 +41,7 @@ class AppendModTags:
         :param modified_obj: An unsorted bam pysam object with just methylation tags
         :return: None
         """
-        LOG.debug(f"Opening {modified_obj.filename.decode()} to fetch tags")
+        LOG.info(f"Opening {modified_obj.filename.decode()} to fetch tags")
 
         for read in modified_obj.fetch(until_eof=True):
             if read.has_tag("Mm") or read.has_tag("MM"):
@@ -47,12 +50,13 @@ class AppendModTags:
 
                 # serialize the tags list
                 serialized_list = pickle.dumps(tags)
+
                 crud.insert_one(
                     qname=str(qname), tag=sqlite3.Binary(serialized_list), db=self.db
                 )
 
         modified_obj.close()
-        LOG.debug(
+        LOG.info(
             f"Base modification tags fetched for {modified_obj.filename.decode()}"
         )
 
@@ -101,7 +105,7 @@ class AppendModTags:
         self.write_linked_tags(aln_bam=chunked_aln_bam, out_file=outfile)
 
         # wait for the file to become available
-        while not os.path.exists(chunked_aln_bam_fp):
+        while not os.path.exists(outfile):
             time.sleep(1)
 
         # file is available, remove it
@@ -109,8 +113,8 @@ class AppendModTags:
 
 
 class ScatterGather:
-    def __init__(self, aln_bam, prefix, output) -> None:
-        self.aln_bam = aln_bam
+    def __init__(self, aln_bam_path, prefix, output) -> None:
+        self.aln_bam = pysam.AlignmentFile(aln_bam_path, check_sq=False)
         self.prefix = prefix
         self.output = output
 
@@ -153,18 +157,10 @@ class ScatterGather:
 
         return bam_file_list
 
-    @property
-    def chunked_bam_names(self):
-        return self.make_subset_bams()
-
-    @property
-    def link_bam_output_names(self):
-        return [x.replace("_tmp.", "_tmp-linked.") for x in self.chunked_bams_names]
-
-    def combine_the_chunked(self):
+    def combine_the_chunked(self, linked_bam_output_fp):
         # Read in the chunked bams
         aln_bams = [
-            pysam.AlignmentFile(x, check_sq=False) for x in self.link_bam_output_names
+            pysam.AlignmentFile(x, check_sq=False) for x in linked_bam_output_fp
         ]
 
         out_bam = pysam.AlignmentFile(self.output, "wb", template=aln_bams[0])
