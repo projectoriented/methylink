@@ -10,6 +10,8 @@ from methylink.append_mod_tags import AppendModTags, ScatterGather
 
 import concurrent.futures as cf
 
+LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
 
 @click.command("base")
 @click.option(
@@ -46,9 +48,17 @@ import concurrent.futures as cf
     required=True,
     help="Output file.",
 )
-def base(sample, threads, methyl_bams, aln_bam, output, tmp=None):
+@click.option(
+    "--log_level",
+    required=False,
+    default="INFO",
+    type=click.Choice(LOG_LEVELS),
+    help="Set the level of log output.",
+    show_default=True,
+)
+def base(sample, threads, methyl_bams, aln_bam, output, log_level, tmp=None):
     # Logging
-    logging.basicConfig(stream=sys.stdout, level="INFO")
+    logging.basicConfig(stream=sys.stdout, level=log_level)
 
     prefix = tempfile.mkdtemp(suffix="_methylink", dir=tmp)
 
