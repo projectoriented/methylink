@@ -78,16 +78,19 @@ class AppendModTags:
         appended_tags = pysam.AlignmentFile(out_file, "wb", template=aln_bam)
         for read in aln_bam.fetch(until_eof=True):
             result = crud.select_one(qname=str(read.qname), db=self.db)
-            deserialized_tag = pickle.loads(result[0])
-            read.set_tags(read.get_tags() + deserialized_tag)
+            if result:
+                deserialized_tag = pickle.loads(result[0])
+                read.set_tags(read.get_tags() + deserialized_tag)
+            else:
+                pass
             appended_tags.write(read)
 
-        print(f"File written to: {out_file}")
+        LOG.info(f"File written to: {out_file}")
         appended_tags.close()
 
         # write index
         pysam.index(out_file)
-        print(f"Index written for {out_file}.bai")
+        LOG.info(f"Index written for {out_file}.bai")
 
     @staticmethod
     def clean_bam(bam: str):

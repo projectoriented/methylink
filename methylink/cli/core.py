@@ -7,7 +7,8 @@ import tempfile
 import click
 
 from methylink.append_mod_tags import AppendModTags, ScatterGather
-import multiprocessing as mp
+
+import concurrent.futures as cf
 
 
 @click.command("base")
@@ -69,18 +70,10 @@ def base(sample, threads, methyl_bams, aln_bam, output, tmp=None):
     chunked_bam_names = scattergather_obj.make_subset_bams()
     link_bam_output_names = [x.replace("_tmp.", "_tmp-linked.") for x in chunked_bam_names]
 
-    with mp.Pool(threads) as p:
-        p.starmap(
-            methylink_obj.run_pool,
-            zip(
-                chunked_bam_names,
-                link_bam_output_names
-            ),
-        )
-        p.close()
-        p.join()
-    #
-    # scattergather_obj.combine_the_chunked(linked_bam_output_fp=link_bam_output_names)
-    #
+    with cf.ThreadPoolExecutor(threads) as executor:
+        executor.map(methylink_obj.run_pool, chunked_bam_names, link_bam_output_names)
+
+    scattergather_obj.combine_the_chunked(linked_bam_output_fp=link_bam_output_names)
+
     # # CLEANING UP!
-    # scattergather_obj.clean_up_tempdir()
+    scattergather_obj.clean_up_tempdir()
