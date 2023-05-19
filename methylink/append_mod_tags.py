@@ -18,11 +18,11 @@ LOG = logging.getLogger(__name__)
 
 
 class AppendModTags:
-    def __init__(self, prefix, threads, methyl_collection, aln_bam_path, output) -> None:
+    def __init__(self, prefix, threads, methyl_collection, aln_path, output) -> None:
         self.prefix = prefix
         self.threads = threads
         self.methyl_collection = methyl_collection
-        self.aln_bam = pysam.AlignmentFile(aln_bam_path, check_sq=False)
+        self.aln_obj = pysam.AlignmentFile(aln_path, check_sq=False)
         self.output = output
         self.db_name = os.path.join(self.prefix, crud.DB_NAME)
 
@@ -38,8 +38,6 @@ class AppendModTags:
     def fetch_modified_bases(self, modified_obj) -> None:
         """
         Fetch base modification tags Mm & Ml
-        :param modified_obj: An unsorted bam pysam object with just methylation tags
-        :return: None
         """
         LOG.info(f"Opening {modified_obj.filename.decode()} to fetch tags")
 
@@ -56,27 +54,22 @@ class AppendModTags:
                 )
 
         modified_obj.close()
-        LOG.info(
-            f"Base modification tags fetched for {modified_obj.filename.decode()}"
-        )
+        LOG.info(f"Base modification tags fetched for {modified_obj.filename.decode()}")
 
     def collect_tags(self, methyl_collection: list) -> None:
         """
         Collect optional tags from ONT bam with methyl calls
-        :param methyl_collection: a list of file paths pointing to methyl bam
-        :return: None
         """
         for bam in methyl_collection:
             methyl_bam = pysam.AlignmentFile(bam, "rb", check_sq=False)
             self.fetch_modified_bases(modified_obj=methyl_bam)
 
-    def write_linked_tags(self, aln_bam, out_file) -> None:
+    def write_linked_tags(self, aln_obj, out_file) -> None:
         """
         Write out merged bam with Mm tags and possibly Ml, and its index.
         """
-
-        appended_tags = pysam.AlignmentFile(out_file, "wb", template=aln_bam)
-        for read in aln_bam.fetch(until_eof=True):
+        appended_tags = pysam.AlignmentFile(out_file, "wb", template=aln_obj)
+        for read in aln_obj.fetch(until_eof=True):
             result = crud.select_one(qname=str(read.qname), db=self.db)
             if result:
                 deserialized_tag = pickle.loads(result[0])
@@ -93,38 +86,38 @@ class AppendModTags:
         LOG.info(f"Index written for {out_file}.bai")
 
     @staticmethod
-    def clean_bam(bam: str):
+    def clean_aln(aln_path: str):
         suffix = ".bai"
-        files = [bam, bam + suffix]
+        files = [aln_path, aln_path + suffix]
         for f in files:
             try:
                 os.remove(f)
             except FileNotFoundError:
                 LOG.warning(f"{f} not found.")
 
-    def run_pool(self, chunked_aln_bam_fp: str, outfile: str) -> None:
-        chunked_aln_bam = pysam.AlignmentFile(chunked_aln_bam_fp, "rb")
+    def run_pool(self, chunked_aln_fp: str, outfile: str) -> None:
+        chunked_aln_obj = pysam.AlignmentFile(chunked_aln_fp, "rb")
 
-        self.write_linked_tags(aln_bam=chunked_aln_bam, out_file=outfile)
+        self.write_linked_tags(aln_obj=chunked_aln_obj, out_file=outfile)
 
         # wait for the file to become available
         while not os.path.exists(outfile):
             time.sleep(1)
 
         # file is available, remove it
-        self.clean_bam(bam=chunked_aln_bam_fp)
+        self.clean_aln(aln_path=chunked_aln_fp)
 
 
 class ScatterGather:
-    def __init__(self, aln_bam_path, prefix, output) -> None:
-        self.aln_bam = pysam.AlignmentFile(aln_bam_path, check_sq=False)
+    def __init__(self, aln_path, prefix, output) -> None:
+        self.aln_obj = pysam.AlignmentFile(aln_path, check_sq=False)
         self.prefix = prefix
         self.output = output
 
     def make_subset_bams(self) -> list[str]:
         subset_size = 100 * 1024 * 1024  # 100MB in bytes
 
-        if os.path.getsize(self.aln_bam.filename.decode()) < subset_size:
+        if os.path.getsize(self.aln_obj.filename.decode()) < subset_size:
             subset_size = int(subset_size / 10)
 
         subset_idx = 0
@@ -133,7 +126,7 @@ class ScatterGather:
 
         bam_file_list = []
 
-        for read in self.aln_bam:
+        for read in self.aln_obj:
             # If the current subset is None or its size has exceeded the subset size, create a new subset
             if current_subset is None or subset_size_bytes >= subset_size:
                 # If this is not the first subset, close the previous subset file
@@ -144,7 +137,7 @@ class ScatterGather:
                 # Create a new subset file with a name based on the subset index
                 subset_idx += 1
                 current_subset = pysam.AlignmentFile(
-                    f"{self.prefix}_tmp.{subset_idx}.bam", "wb", template=self.aln_bam
+                    f"{self.prefix}_tmp.{subset_idx}.bam", "wb", template=self.aln_obj
                 )
                 bam_file_list.append(f"{self.prefix}_tmp.{subset_idx}.bam")
 
@@ -156,7 +149,7 @@ class ScatterGather:
         current_subset.close()
         pysam.index(current_subset.filename.decode())
 
-        self.aln_bam.close()
+        self.aln_obj.close()
 
         return bam_file_list
 
@@ -179,5 +172,6 @@ class ScatterGather:
         parent_dir = os.path.dirname(self.prefix)
         try:
             shutil.rmtree(parent_dir)
-        except OSError as e:
-            LOG.debug("Not found: %s - %s." % (e.filename, e.strerror))
+            LOG.debug(f"Cleaned up {parent_dir}.")
+        except OSError:
+            LOG.warning(f"Cannot find {parent_dir}")

@@ -5,15 +5,25 @@ import os
 import tempfile
 
 import click
+import concurrent.futures as cf
 
 from methylink.append_mod_tags import AppendModTags, ScatterGather
 
-import concurrent.futures as cf
+# Get version
+from methylink import __version__ as methylink_version
 
 LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-
 @click.command("base")
+@click.version_option(version=methylink_version)
+@click.option(
+    "--log_level",
+    required=False,
+    default="INFO",
+    type=click.Choice(LOG_LEVELS),
+    help="Set the level of log output.",
+    show_default=True,
+)
 @click.option(
     "--threads",
     show_default=True,
@@ -33,11 +43,7 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     multiple=True,
     help="Unmapped bam files with methylation tags.",
 )
-@click.option(
-    "--aln_bam",
-    required=True,
-    help="Aligned bam to map the meth tags to."
-)
+@click.option("--aln", required=True, help="Aligned bam to map the meth tags to.")
 @click.option(
     "--sample",
     required=True,
@@ -48,22 +54,19 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     required=True,
     help="Output file.",
 )
-@click.option(
-    "--log_level",
-    required=False,
-    default="INFO",
-    type=click.Choice(LOG_LEVELS),
-    help="Set the level of log output.",
-    show_default=True,
-)
-def base(sample, threads, methyl_bams, aln_bam, output, log_level, tmp=None):
+def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
     # Logging
     logging.basicConfig(stream=sys.stdout, level=log_level)
 
     prefix = tempfile.mkdtemp(suffix="_methylink", dir=tmp)
 
-    methylink_obj = AppendModTags(threads=threads, methyl_collection=methyl_bams, aln_bam_path=aln_bam, output=output,
-                                  prefix=prefix)
+    methylink_obj = AppendModTags(
+        threads=threads,
+        methyl_collection=methyl_bams,
+        aln_path=aln,
+        output=output,
+        prefix=prefix,
+    )
 
     # Create database
     methylink_obj.create_database()
@@ -73,12 +76,13 @@ def base(sample, threads, methyl_bams, aln_bam, output, log_level, tmp=None):
 
     # Make the chunks
     scattergather_obj = ScatterGather(
-        aln_bam_path=aln_bam,
-        prefix=os.path.join(prefix, sample),
-        output=output
+        aln_path=aln, prefix=os.path.join(prefix, sample), output=output
     )
+
     chunked_bam_names = scattergather_obj.make_subset_bams()
-    link_bam_output_names = [x.replace("_tmp.", "_tmp-linked.") for x in chunked_bam_names]
+    link_bam_output_names = [
+        x.replace("_tmp.", "_tmp-linked.") for x in chunked_bam_names
+    ]
 
     with cf.ThreadPoolExecutor(threads) as executor:
         executor.map(methylink_obj.run_pool, chunked_bam_names, link_bam_output_names)
