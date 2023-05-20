@@ -29,4 +29,4 @@ jobs:
           make testsuite
       - name: Methylink
         run: |
-          ls -lrta
+          methylink --threads 2 --aln tests/data/CHM1_aln_test-subsampled.bam --sample CHM1 --methyl_bams tests/data/CHM1_methylated_test-1.bam --output CHM1-linked.bam
