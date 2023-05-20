@@ -1,5 +1,4 @@
 # methylink
-[![Snakemake](https://img.shields.io/badge/snakemake-==6.7.0-brightgreen.svg)](https://snakemake.github.io)
 [![GitHub actions status](https://github.com/projectoriented/methylink/workflows/Tests/badge.svg?branch=main)](https://github.com/projectoriented/methylink/actions?query=branch%3Amain+workflow%3ATests)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/projectoriented/methylink/blob/main/LICENSE)
 
@@ -38,4 +37,16 @@ Options:
 ## Quick start
 ```shell
 methylink --threads 2 --aln tests/data/CHM1_aln_test-subsampled.bam --sample CHM1 --methyl_bams $(ls tests/data/CHM1_methylated_test-*.bam | tr '\n' ',') --output CHM1-linked.bam
+```
+
+## Development
+I'm happy with any contributions to make this code better :muscle:. You should be able to go forth with the following:
+```shell
+git clone [this repo]
+cd methylink
+python -m venv vmeth
+source vmeth/bin/activate
+
+pip install --editable .
+pytest
 ```
