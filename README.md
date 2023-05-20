@@ -5,7 +5,7 @@
 A command line tool to link methylated sites between two BAM/SAM files of the same origin.
 
 ## Installation
-In a **clean** environment
+In a **clean** :sparkles: environment
 ```shell
 pip install methylink
 ```
@@ -48,5 +48,10 @@ python -m venv vmeth
 source vmeth/bin/activate
 
 pip install --editable .
+```
+
+## Test
+```shell
 pytest
 ```
+If that's okay then you're good to go, :tada:!
