@@ -1,23 +1,22 @@
 from setuptools import setup, find_packages
 
-import methylink
 
-requirements = [
-    "click",
-    "pysam",
+REQUIREMENTS = [
+    "click >= 8.1.3",
+    "pysam >= 0.21.0",
     "pytest"
 ]
 
 setup(
     name='methylink',
-    version=methylink.__version__,
+    version="0.1.0",
     author="Mei Wu",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        requirements
+        REQUIREMENTS
     ],
-    python_requires=">=3.8.3",
+    python_requires=">=3.9.13",
     entry_points={
         'console_scripts': [
             'methylink = methylink.main:base',

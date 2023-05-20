@@ -5,6 +5,7 @@ LABEL maintainer="Mei Wu"
 
 ARG WORK_DIR=project
 
+WORKDIR ${WORK_DIR}
 COPY . /${WORK_DIR}
 
-RUN cd /${WORK_DIR} && pip install --upgrade --no-cache-dir .
+RUN pip install --upgrade --no-cache-dir .

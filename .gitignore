@@ -5,8 +5,12 @@ output/
 logs/
 workflow/.snakemake/
 
+#pycache
+.pytest_cache
+
 # setuptools
 *.egg-info/
+build/
 
 # IDE - PyCharm related
 .idea/

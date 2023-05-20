@@ -14,7 +14,8 @@ from methylink import __version__ as methylink_version
 
 LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-@click.command("base")
+@click.group()
+@click.help_option('-h', '--help')
 @click.version_option(version=methylink_version)
 @click.option(
     "--log_level",
@@ -55,9 +56,15 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     help="Output file.",
 )
 def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
+    """A command line tool to link methylated sites between two BAM files of the same origin."""
     # Logging
     logging.basicConfig(stream=sys.stdout, level=log_level)
 
+    # Parse the methyl_bams option
+    if "," in methyl_bams:
+        methyl_bams = [x for x in methyl_bams if x][0].rstrip(",").split(",")
+
+    click.echo(methyl_bams)
     prefix = tempfile.mkdtemp(suffix="_methylink", dir=tmp)
 
     methylink_obj = AppendModTags(
