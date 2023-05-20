@@ -65,7 +65,6 @@ def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
     if "," in methyl_bams:
         methyl_bams = [x for x in methyl_bams if x][0].rstrip(",").split(",")
 
-    click.echo(methyl_bams)
     prefix = tempfile.mkdtemp(suffix="_methylink", dir=tmp)
 
     methylink_obj = AppendModTags(
