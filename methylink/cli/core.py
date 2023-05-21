@@ -16,7 +16,7 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
 
 @click.command("base")
-@click.help_option('-h', '--help')
+@click.help_option("-h", "--help")
 @click.version_option(version=methylink_version)
 @click.option(
     "--log_level",

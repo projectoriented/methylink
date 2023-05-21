@@ -39,7 +39,9 @@ def insert_one(qname, tag, db):
 
 
 def select_one(qname, db):
-    result = db.cur.execute("SELECT tag FROM meth_tags WHERE qname = ?", (qname,)).fetchone()
+    result = db.cur.execute(
+        "SELECT tag FROM meth_tags WHERE qname = ?", (qname,)
+    ).fetchone()
     if result:
         LOG.debug(f"Found tag for {qname}")
         return result
