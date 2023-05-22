@@ -1,8 +1,9 @@
-# pipeline
+# snakemake
 output/
 .snakemake/
 logs/
 workflow/.snakemake/
+methylink/snakemake
 
 #pycache
 .pytest_cache
@@ -10,6 +11,7 @@ workflow/.snakemake/
 # setuptools
 *.egg-info/
 build/
+dist/
 
 # IDE - PyCharm related
 .idea/

@@ -1,5 +1,5 @@
 """
-Link an aligned bam to its unmapped counterpart(s) with methylation tags. This is a script tuned for Snakemake.
+Link an aligned bam to its unmapped counterpart(s) with methylation tags.
 Author: Mei Wu, github.com/projectoriented
 """
 
