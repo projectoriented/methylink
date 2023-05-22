@@ -3,11 +3,13 @@ import logging
 import sys
 import os
 import tempfile
+import functools
 
 import click
 import concurrent.futures as cf
 
 from methylink.append_mod_tags import AppendModTags, ScatterGather
+
 
 # Get version
 from methylink import __version__ as methylink_version
@@ -62,8 +64,7 @@ def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
     logging.basicConfig(stream=sys.stdout, level=log_level)
 
     # Parse the methyl_bams option
-    if "," in methyl_bams:
-        methyl_bams = [x for x in methyl_bams if x][0].rstrip(",").split(",")
+    methyl_bams = functools.reduce(lambda x, y: x+y,  [x.rstrip(",").split(",") if "," in x else x for x in methyl_bams])
 
     prefix = tempfile.mkdtemp(suffix="_methylink", dir=tmp)
 
