@@ -1,7 +1,6 @@
 include LICENSE
 include README.md
 
-exclude Dockerfile
 recursive-exclude methylink/snakemake
 recursive-exclude tests *
 recursive-exclude * __pycache__
