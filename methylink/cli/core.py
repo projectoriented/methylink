@@ -64,7 +64,10 @@ def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
     logging.basicConfig(stream=sys.stdout, level=log_level)
 
     # Parse the methyl_bams option
-    methyl_bams = functools.reduce(lambda x, y: x+y,  [x.rstrip(",").split(",") if "," in x else x for x in methyl_bams])
+    methyl_bams = functools.reduce(
+        lambda x, y: x + y,
+        [x.rstrip(",").split(",") if "," in x else x for x in methyl_bams],
+    )
 
     prefix = tempfile.mkdtemp(suffix="_methylink", dir=tmp)
 
