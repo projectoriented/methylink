@@ -57,7 +57,7 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     help="Output file.",
 )
 def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
-    """A command line tool to link methylated sites between two BAM files of the same origin."""
+    """A command line tool to link methylated sites between SAM/BAM files of the same origin."""
     # Logging
     logging.basicConfig(stream=sys.stdout, level=log_level)
 
