@@ -66,7 +66,7 @@ def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
     # Parse the methyl_bams option
     methyl_bams = functools.reduce(
         lambda x, y: x + y,
-        [x.rstrip(",").split(",") if "," in x else x for x in methyl_bams],
+        [x.rstrip(" ").split(" ") if " " in x else [x] for x in methyl_bams],
     )
 
     prefix = tempfile.mkdtemp(suffix="_methylink", dir=tmp)

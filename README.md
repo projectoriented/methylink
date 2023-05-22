@@ -36,7 +36,12 @@ Options:
 
 ## Quick start
 ```shell
-methylink --threads 2 --aln tests/data/CHM1_aln_test-subsampled.bam --sample CHM1 --methyl_bams $(ls tests/data/CHM1_methylated_test-*.bam | tr '\n' ',') --output CHM1-linked.bam
+methylink \
+  --threads 2 \
+  --aln tests/data/CHM1_aln_test-subsampled.bam \
+  --sample CHM1 \
+  --methyl_bams "$(echo tests/data/CHM1_methylated_test-{1,2,3,4,5}.bam)" \
+  --output CHM1-linked.bam
 ```
 
 ## Development
