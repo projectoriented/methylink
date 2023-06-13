@@ -51,7 +51,7 @@ LOG_LEVELS = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 @click.option(
     "--sample",
     required=True,
-    help="Sample name.",
+    help="Sample name to use in the prefixing",
 )
 @click.option(
     "--output",

@@ -146,8 +146,9 @@ class ScatterGather:
             subset_size_bytes = os.path.getsize(current_subset.filename.decode())
 
         # Close the last subset file
-        current_subset.close()
-        pysam.index(current_subset.filename.decode())
+        if current_subset is not None:
+            current_subset.close()
+            pysam.index(current_subset.filename.decode())
 
         self.aln_obj.close()
 
