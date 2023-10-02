@@ -55,6 +55,10 @@ source vmeth/bin/activate
 pip install --editable .
 ```
 
+## What remains to do-
+- [ ] use signal library to catch for forced exit (eg. ctrl+c) to safely delete temp folders
+- [ ] write github actions to automate test + build + publish
+
 ## Test
 ```shell
 pytest
