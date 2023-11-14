@@ -36,7 +36,7 @@ jobs:
       - name: Get version
         id: methylink-version
         run: |
-          echo "VERSION=$(python -c 'import methylink; print(methylink.__version__)'" >> $GITHUB_OUTPUT
+          echo "VERSION=$(python -c 'import methylink; print(methylink.__version__)')" >> $GITHUB_OUTPUT
 
   release:
     name: Make tagged release on github
