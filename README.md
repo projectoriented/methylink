@@ -56,8 +56,10 @@ pip install --editable .
 ```
 
 ## What remains to do-
-- [ ] use signal library to catch for forced exit (eg. ctrl+c) to safely delete temp folders
-- [ ] write github actions to automate test + build + publish
+- [ ] add to bioconda
+- [ ] expand on documentation
+- [x] use signal library to catch for forced exit (eg. ctrl+c) to safely delete temp folders
+- [x] write github actions to automate test + build + publish
 
 ## Test
 ```shell

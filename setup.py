@@ -1,5 +1,6 @@
 import io
 import os
+import re
 
 from setuptools import setup, find_packages
 
@@ -16,9 +17,14 @@ try:
 except FileNotFoundError:
     LONG_DESCRIPTION = DESCRIPTION
 
+with io.open(os.path.join(HERE, "__init__.py"), encoding="utf-8") as f:
+    pattern = re.compile(r'.*(?P<version>[0-9]\.[0-9]\.[0-9])')
+    version_file = f.read()
+    METHYLINK_VERSION = pattern.match(version_file).groupdict()["version"]
+
 setup(
     name=NAME,
-    version="0.3.0",
+    version=METHYLINK_VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
