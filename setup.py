@@ -18,7 +18,7 @@ except FileNotFoundError:
     LONG_DESCRIPTION = DESCRIPTION
 
 with io.open(os.path.join(HERE, "methylink", "__init__.py"), encoding="utf-8") as f:
-    pattern = re.compile(r'.*(?P<version>[0-9]\.[0-9]\.[0-9])')
+    pattern = re.compile(r".*(?P<version>[0-9]\.[0-9]\.[0-9])")
     version_file = f.read()
     METHYLINK_VERSION = pattern.match(version_file).groupdict()["version"]
 

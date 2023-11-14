@@ -100,9 +100,13 @@ def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
         ]
 
         with cf.ThreadPoolExecutor(threads) as executor:
-            executor.map(methylink_obj.run_pool, chunked_bam_names, link_bam_output_names)
+            executor.map(
+                methylink_obj.run_pool, chunked_bam_names, link_bam_output_names
+            )
 
-        scattergather_obj.combine_the_chunked(linked_bam_output_fp=link_bam_output_names)
+        scattergather_obj.combine_the_chunked(
+            linked_bam_output_fp=link_bam_output_names
+        )
 
         # # CLEANING UP!
         scattergather_obj.clean_up_tempdir()
@@ -111,7 +115,7 @@ def base(sample, threads, methyl_bams, aln, output, log_level, tmp=None):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
         # Clean up
-        LOG.warning('User forced exit- cleaning up...')
+        LOG.warning("User forced exit- cleaning up...")
 
         # Remove the database
         os.remove(methylink_obj.db_name)
