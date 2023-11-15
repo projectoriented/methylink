@@ -1,3 +1,11 @@
+## v0.6.0 (2023-11-15)
+[GitHub release](https://github.com/projectoriented/methylink/releases/tag/v0.6.0)
+
+### What's Changed
+- Fixed CI workflows.
+- Expanded on what `--sample` means.
+- Fixed Dockerfile
+
 ## v0.5.0 (2023-11-13)
 [GitHub release](https://github.com/projectoriented/methylink/releases/tag/v0.5.0)
 

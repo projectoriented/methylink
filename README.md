@@ -9,6 +9,7 @@ In a **clean** :sparkles: environment
 ```shell
 pip install methylink
 ```
+**NOTE**: This does not work on windows. Separately, C libraries like zlib may be a dependency if you do not already have htslib installed- peep here: https://pysam.readthedocs.io/en/latest/installation.html#requirements. If a faster solution is desired and docker is installed, please build the image to circumvent local dependencies. Thanks!   
 
 ## Usage:
 ```shell 
@@ -29,7 +30,7 @@ Options:
                                   [required]
   --aln TEXT                      Aligned bam to map the meth tags to.
                                   [required]
-  --sample TEXT                   Sample name.  [required]
+  --sample TEXT                   Sample name. This will be a prefix for the output; e.g. CHM1-linked.bam [required]
   --output TEXT                   Output file.  [required]
 
 ```
