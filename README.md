@@ -30,7 +30,7 @@ Options:
                                   [required]
   --aln TEXT                      Aligned bam to map the meth tags to.
                                   [required]
-  --sample TEXT                   Sample name. This will be a prefix for the output; e.g. CHM1-linked.bam [required]
+  --sample TEXT                   Sample name. Prefix for output; e.g. [sample]-linked.bam [required]
   --output TEXT                   Output file.  [required]
 
 ```
